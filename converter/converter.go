@@ -11,8 +11,8 @@ import (
 
 	"path"
 
-	"github.com/iFaceless/godub/utils"
 	"github.com/tink-ab/tempfile"
+	"github.com/yeoji/godub/utils"
 )
 
 var (
@@ -264,7 +264,7 @@ func (c *Converter) extendCoverArgs() error {
 }
 
 func (c *Converter) extendBitRateArgs() {
-	if c.bitRate != "" {
+	if c.bitRate != 0 {
 		c.extendCmdArgs("-b:a", fmt.Sprintf("%d", c.bitRate))
 	}
 }
