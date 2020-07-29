@@ -1,6 +1,8 @@
 package audioop
 
-import "math"
+import (
+	"math"
+)
 
 func GetSample(cp []byte, size int, offset int) (int32, error) {
 	err := checkParameters(len(cp), size)
@@ -453,6 +455,35 @@ func ToStereo(cp []byte, size int, fac1, fac2 float64) ([]byte, error) {
 	}
 
 	return buf, nil
+}
+
+func SplitChannels(cp []byte, size int, channels int) ([][]byte, error) {
+	err := checkParameters(len(cp), size)
+	if err != nil {
+		return nil, err
+	}
+
+	clip := getClipFunc(size)
+	channelBufs := make([][]byte, channels)
+	for i := 0; i < len(channelBufs); i++ {
+		channelBufs[i] = make([]byte, len(cp)/channels)
+	}
+
+	for i := 0; i < sampleCount(cp, size); i += channels {
+		for j := 0; j < channels; j++ {
+			sample, err := getSample(cp, size, j+i)
+			if err != nil {
+				return nil, err
+			}
+
+			sample = clip(sample)
+			err = putSample(channelBufs[j], size, i/channels, sample)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return channelBufs, nil
 }
 
 func Add(cp1 []byte, cp2 []byte, size int) ([]byte, error) {

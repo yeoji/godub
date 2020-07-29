@@ -9,9 +9,9 @@ import (
 
 	"time"
 
+	"github.com/caicloud/nirvana/log"
 	"github.com/yeoji/godub"
 	"github.com/yeoji/godub/converter"
-	"github.com/caicloud/nirvana/log"
 )
 
 func main() {
@@ -24,6 +24,7 @@ func main() {
 	appendSegment()
 	repeat()
 	overlay()
+	splitToMono()
 }
 
 func load() {

@@ -303,6 +303,29 @@ func (seg *AudioSegment) ForkWithChannels(channels uint16) (*AudioSegment, error
 	return seg.derive(converted, Channels(channels), FrameWidth(uint32(frameWidth)))
 }
 
+func (seg *AudioSegment) SplitToMono() ([]*AudioSegment, error) {
+	if seg.channels == 1 {
+		return []*AudioSegment{seg}, nil
+	}
+
+	channelBufs, err := audioop.SplitChannels(seg.data, int(seg.sampleWidth), int(seg.channels))
+	if err != nil {
+		return nil, err
+	}
+
+	var monoSegments []*AudioSegment
+	for _, buf := range channelBufs {
+		segment, err := seg.derive(buf, Channels(1), FrameWidth(uint32(seg.sampleWidth)))
+		if err != nil {
+			return nil, err
+		}
+
+		monoSegments = append(monoSegments, segment)
+	}
+
+	return monoSegments, nil
+}
+
 type OverlayConfig struct {
 	// Position to start overlaying
 	Position time.Duration
