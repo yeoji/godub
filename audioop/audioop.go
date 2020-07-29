@@ -463,7 +463,6 @@ func SplitChannels(cp []byte, size int, channels int) ([][]byte, error) {
 		return nil, err
 	}
 
-	clip := getClipFunc(size)
 	channelBufs := make([][]byte, channels)
 	for i := 0; i < len(channelBufs); i++ {
 		channelBufs[i] = make([]byte, len(cp)/channels)
@@ -476,7 +475,6 @@ func SplitChannels(cp []byte, size int, channels int) ([][]byte, error) {
 				return nil, err
 			}
 
-			sample = clip(sample)
 			err = putSample(channelBufs[j], size, i/channels, sample)
 			if err != nil {
 				return nil, err
@@ -484,6 +482,40 @@ func SplitChannels(cp []byte, size int, channels int) ([][]byte, error) {
 		}
 	}
 	return channelBufs, nil
+}
+
+func CombineMono(size int, cps [][]byte) ([]byte, error) {
+	channels := len(cps)
+
+	// all bufs should be the same length, so just pick the first one to check
+	err := checkParameters(len(cps[0]), size)
+	if err != nil {
+		return nil, err
+	}
+
+	buf := make([]byte, len(cps[0])*channels)
+
+	for channelIndex, cp := range cps {
+		// Bug?: no idea why the left channel needs to be offset to the right channel's byte position
+		channelOffset := 0
+		if channelIndex == 0 {
+			channelOffset = 1
+		}
+
+		for i := 0; i < sampleCount(cp, size); i++ {
+			sample, err := getSample(cp, size, i)
+			if err != nil {
+				return nil, err
+			}
+
+			err = putSample(buf, size, (i*channels) + channelOffset, sample)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return buf, nil
 }
 
 func Add(cp1 []byte, cp2 []byte, size int) ([]byte, error) {

@@ -109,6 +109,36 @@ func NewAudioSegmentFromWaveAudio(waveAudio *wav.WaveAudio) (*AudioSegment, erro
 	)
 }
 
+func NewAudioSegmentFromMono(leftChannel *AudioSegment, rightChannel *AudioSegment) (*AudioSegment, error) {
+	segments, err := sync(leftChannel, rightChannel)
+	if err != nil {
+		return nil, err
+	}
+
+	if segments[0].channels != 1 {
+		return nil, NewAudioSegmentError("all audio segments should be mono channel")
+	}
+
+	bufs := make([][]byte, len(segments))
+	bufs[0] = leftChannel.RawData()
+	bufs[1] = rightChannel.RawData()
+
+	newChannels := len(segments)
+	sampleWidth := segments[0].sampleWidth
+	combined, err := audioop.CombineMono(int(sampleWidth), bufs)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewAudioSegment(
+		combined,
+		Channels(uint16(newChannels)),
+		SampleWidth(sampleWidth),
+		FrameRate(segments[0].frameRate),
+		FrameWidth(segments[0].frameWidth * uint32(newChannels)),
+	)
+}
+
 func (seg *AudioSegment) AsWaveAudio() *wav.WaveAudio {
 	waveAudio := wav.WaveAudio{
 		Format:        wav.AudioFormatPCM,

@@ -25,6 +25,7 @@ func main() {
 	repeat()
 	overlay()
 	splitToMono()
+	combineMono()
 }
 
 func load() {
